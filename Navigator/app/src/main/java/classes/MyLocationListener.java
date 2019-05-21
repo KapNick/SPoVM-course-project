@@ -1,12 +1,9 @@
 package classes;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 
 public class MyLocationListener implements LocationListener {
 
@@ -38,13 +35,6 @@ public class MyLocationListener implements LocationListener {
     }
 
     public void start(){
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-//                != PackageManager.PERMISSION_GRANTED) {
-//
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 2);
-//        }
-//        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 10, 10, this);
-//        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000 * 10, 10, this);
         checkEnabled();
     }
 
@@ -65,13 +55,12 @@ public class MyLocationListener implements LocationListener {
     @Override
     public void onProviderEnabled(String provider) {
         checkEnabled();
-        //showLocation(locationManager.getLastKnownLocation(provider));
     }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {}
 
-    private void showLocation(Location location) {
+    public void showLocation(Location location) {
         if (location == null)
             return;
         if (location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
@@ -84,8 +73,11 @@ public class MyLocationListener implements LocationListener {
         }
     }
 
-    public void checkEnabled() {
-        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
-        !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) return;
+    private boolean checkEnabled() {
+        if(
+        !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
+        !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        ) return false;
+        return true;
     }
 }
