@@ -3,14 +3,14 @@ package com.example.navigator;
 import classes.MyLocationListener;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.view.View;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,6 +26,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     GoogleMap map;
     MyLocationListener list = new MyLocationListener();
     private LocationManager locationManager;
+    private boolean buttonStatus = false;
+    LatLng position;
 
 
     @Override
@@ -61,7 +63,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onResume() {
         super.onResume();
         list.setLocationManager(locationManager);
-        list.start();  //изначально это должно было быть в отдельной функции, но там возникли проблемы с аргументом context
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
 
@@ -86,14 +87,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
-        LatLng position = new LatLng(list.getMyLocationLattitude(), list.getMyLocationLongitude());
+        position = new LatLng(list.getMyLocationLattitude(), list.getMyLocationLongitude());
         map.addMarker(new MarkerOptions().position(position).title("You here"));
         map.moveCamera(CameraUpdateFactory.newLatLng(position));
     }
 
     private boolean hasPermissions() {
-        int res = 0;
-        //string array of permissions,
+        int res;
         String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
 
         for (String perms : permissions) {
@@ -125,31 +125,18 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        boolean allowed = true;
-
-        switch (requestCode) {
-            case REQUEST_LOCATION:
-
-                for (int res : grantResults) {
-                    // if user granted all permissions.
-                    allowed = allowed && (res == PackageManager.PERMISSION_GRANTED);
-                }
-
-                break;
-            default:
-                // if user not granted permissions.
-                allowed = false;
-                break;
-        }
-
-        if (!allowed) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    Toast.makeText(this, "Storage Permissions denied.", Toast.LENGTH_SHORT).show();
-                }
+    public void onButtonLocationClicked(View v){
+        if(list.checkEnabled()) {
+            if (buttonStatus) {
+                onPause();
+                buttonStatus = false;
+            } else {
+                onResume();
+                buttonStatus = true;
             }
+        }else{
+            startActivity(new Intent(
+                    android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
         }
     }
 }

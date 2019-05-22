@@ -34,10 +34,6 @@ public class MyLocationListener implements LocationListener {
         return myLocationLattitude;
     }
 
-    public void start(){
-        checkEnabled();
-    }
-
     public void pause(){
         locationManager.removeUpdates(this);
     }
@@ -48,14 +44,10 @@ public class MyLocationListener implements LocationListener {
     }
 
     @Override
-    public void onProviderDisabled(String provider) {
-        checkEnabled();
-    }
+    public void onProviderDisabled(String provider) {}
 
     @Override
-    public void onProviderEnabled(String provider) {
-        checkEnabled();
-    }
+    public void onProviderEnabled(String provider) {}
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -73,7 +65,7 @@ public class MyLocationListener implements LocationListener {
         }
     }
 
-    private boolean checkEnabled() {
+    public boolean checkEnabled() {
         if(
         !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
         !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
