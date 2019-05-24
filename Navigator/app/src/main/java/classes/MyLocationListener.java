@@ -5,11 +5,14 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
+import java.util.concurrent.Semaphore;
+
 public class MyLocationListener implements LocationListener {
 
     private double myLocationLongitude;
     private double myLocationLattitude;
     private LocationManager locationManager;
+    Semaphore sem;
 
 
     public MyLocationListener(double myLocationLattitude, double myLocationLongitude) {
@@ -20,6 +23,10 @@ public class MyLocationListener implements LocationListener {
     public MyLocationListener() {
         this.myLocationLongitude = 0;
         this.myLocationLattitude = 0;
+    }
+
+    public void setSem(Semaphore sem) {
+        this.sem = sem;
     }
 
     public void setLocationManager(LocationManager locationManager) {
@@ -40,7 +47,13 @@ public class MyLocationListener implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
+//        try {
+//            sem.acquire();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         showLocation(location);
+//        sem.release();
     }
 
     @Override

@@ -17,7 +17,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.concurrent.Semaphore;
 
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -28,6 +31,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationManager locationManager;
     private boolean buttonStatus = false;
     LatLng position;
+    Semaphore sem = new Semaphore(1, true);
+    Marker myLoc = null;
 
 
     @Override
@@ -40,6 +45,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        list.setSem(sem);
         if(!hasPermissions()) {
             requestPerms();
         }
@@ -88,7 +94,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         position = new LatLng(list.getMyLocationLattitude(), list.getMyLocationLongitude());
-        map.addMarker(new MarkerOptions().position(position).title("You here"));
+        myLoc = map.addMarker(new MarkerOptions().position(position).title("You here"));
         map.moveCamera(CameraUpdateFactory.newLatLng(position));
     }
 
@@ -130,9 +136,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             if (buttonStatus) {
                 onPause();
                 buttonStatus = false;
+                position = new LatLng(list.getMyLocationLattitude(), list.getMyLocationLongitude());
+                myLoc = map.addMarker(new MarkerOptions().position(position).title("You here"));
+                map.moveCamera(CameraUpdateFactory.newLatLng(position));
             } else {
                 onResume();
                 buttonStatus = true;
+                myLoc.remove();
             }
         }else{
             startActivity(new Intent(
