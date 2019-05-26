@@ -5,14 +5,20 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
-import java.util.concurrent.Semaphore;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MyLocationListener implements LocationListener {
 
     private double myLocationLongitude;
     private double myLocationLattitude;
     private LocationManager locationManager;
-    Semaphore sem;
+    private Marker myLoc = null;
+    private LatLng position;
+    private GoogleMap map;
 
 
     public MyLocationListener(double myLocationLattitude, double myLocationLongitude) {
@@ -20,13 +26,21 @@ public class MyLocationListener implements LocationListener {
         this.myLocationLattitude = myLocationLattitude;
     }
 
+    public void setMap(GoogleMap map) {
+        this.map = map;
+    }
+
+    public void setMyLoc(Marker myLoc) {
+        this.myLoc = myLoc;
+    }
+
+    public void setPosition(LatLng position) {
+        this.position = position;
+    }
+
     public MyLocationListener() {
         this.myLocationLongitude = 0;
         this.myLocationLattitude = 0;
-    }
-
-    public void setSem(Semaphore sem) {
-        this.sem = sem;
     }
 
     public void setLocationManager(LocationManager locationManager) {
@@ -43,17 +57,16 @@ public class MyLocationListener implements LocationListener {
 
     public void pause(){
         locationManager.removeUpdates(this);
+        myLoc.remove();
     }
 
     @Override
     public void onLocationChanged(Location location) {
-//        try {
-//            sem.acquire();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
         showLocation(location);
-//        sem.release();
+        if (myLoc != null) myLoc.remove();
+        position = new LatLng(myLocationLattitude, myLocationLongitude);
+        myLoc = map.addMarker(new MarkerOptions().position(position).title("You here"));
+        map.moveCamera(CameraUpdateFactory.newLatLng(position));
     }
 
     @Override
@@ -79,10 +92,7 @@ public class MyLocationListener implements LocationListener {
     }
 
     public boolean checkEnabled() {
-        if(
-        !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
-        !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        ) return false;
-        return true;
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 }

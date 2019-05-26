@@ -12,15 +12,11 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-
-import java.util.concurrent.Semaphore;
 
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -29,9 +25,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     GoogleMap map;
     MyLocationListener list = new MyLocationListener();
     private LocationManager locationManager;
-    private boolean buttonStatus = false;
+    private boolean buttonStatus = true;
     LatLng position;
-    Semaphore sem = new Semaphore(1, true);
     Marker myLoc = null;
 
 
@@ -45,7 +40,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        list.setSem(sem);
         if(!hasPermissions()) {
             requestPerms();
         }
@@ -81,7 +75,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION);
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 10, 10, list);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000 * 10, 10, list);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 10, list);
     }
 
     @Override
@@ -93,9 +87,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
-        position = new LatLng(list.getMyLocationLattitude(), list.getMyLocationLongitude());
-        myLoc = map.addMarker(new MarkerOptions().position(position).title("You here"));
-        map.moveCamera(CameraUpdateFactory.newLatLng(position));
+        list.setMap(map);
+        list.setMyLoc(myLoc);
+        list.setPosition(position);
     }
 
     private boolean hasPermissions() {
@@ -136,13 +130,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             if (buttonStatus) {
                 onPause();
                 buttonStatus = false;
-                position = new LatLng(list.getMyLocationLattitude(), list.getMyLocationLongitude());
-                myLoc = map.addMarker(new MarkerOptions().position(position).title("You here"));
-                map.moveCamera(CameraUpdateFactory.newLatLng(position));
             } else {
                 onResume();
                 buttonStatus = true;
-                myLoc.remove();
             }
         }else{
             startActivity(new Intent(
