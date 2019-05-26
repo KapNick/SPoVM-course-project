@@ -21,11 +21,6 @@ public class MyLocationListener implements LocationListener {
     private GoogleMap map;
 
 
-    public MyLocationListener(double myLocationLattitude, double myLocationLongitude) {
-        this.myLocationLongitude = myLocationLongitude;
-        this.myLocationLattitude = myLocationLattitude;
-    }
-
     public void setMap(GoogleMap map) {
         this.map = map;
     }
