@@ -1,20 +1,20 @@
 package classes;
 
 public class Point {
+    private int flag;
     private String name;
     private double lattitude;
     private double longtitude;
 
-    public Point(String name, double lattitude, double longtitude) {
+    public Point(int flag, String name, double lattitude, double longtitude) {
+        this.flag = flag;
         this.name = name;
         this.lattitude = lattitude;
         this.longtitude = longtitude;
     }
 
-    public Point() {
-        this.name = "";
-        this.lattitude = 0;
-        this.longtitude = 0;
+    public int getFlag() {
+        return flag;
     }
 
     public String getName() {
@@ -29,15 +29,8 @@ public class Point {
         return lattitude;
     }
 
-    public void setLattitude(double lattitude) {
-        this.lattitude = lattitude;
-    }
-
     public double getLongtitude() {
         return longtitude;
     }
 
-    public void setLongtitude(double longtitude) {
-        this.longtitude = longtitude;
-    }
 }

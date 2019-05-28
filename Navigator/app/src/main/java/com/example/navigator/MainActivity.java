@@ -1,6 +1,7 @@
 package com.example.navigator;
 
 import classes.MyLocationListener;
+import classes.Point;
 
 import android.Manifest;
 import android.content.Intent;
@@ -17,11 +18,27 @@ import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Scanner;
 
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
+    private ArrayList<Marker> markers = new ArrayList<>();
+    private ArrayList<Point> listPoints = new ArrayList<>();
+    private final static String FILE_NAME = "contt.txt";
+    private String text;
 
     private static final int REQUEST_LOCATION = 2;
     private static final int REQUEST_FILE = 4;
@@ -153,5 +170,109 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             startActivity(new Intent(
                     android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
         }
+    }
+
+    public void onButtonUpdateClicked(View v) throws IOException {   //не работает из-за сканера, тк он крашит прогу и не отрабатывает
+        if(markers.size() != 0){
+            for(int i = 0; i < markers.size(); i++){
+                Marker mrk = markers.get(i);
+                mrk.remove();
+            }
+        }
+        openText();
+        text = null;
+        if (listPoints.size() == 0) {
+            Toast.makeText(MainActivity.this, "Error: file is empty", Toast.LENGTH_SHORT).show();
+        }else {
+            for (int i = 0; i < listPoints.size(); i++) {
+                markers.add(map.addMarker(new MarkerOptions().position(new LatLng(listPoints.get(i).getLattitude(),
+                        listPoints.get(i).getLongtitude())).title(listPoints.get(i).getName())
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))));
+            text = text + listPoints.get(i).getFlag() + "\n" + listPoints.get(i).getName() + "\n"
+                    + listPoints.get(i).getLattitude() + "\n" + listPoints.get(i).getLongtitude() + "\n";
+            }
+            saveText();
+        }
+    }
+
+    public void saveText(){
+
+        FileOutputStream fos = null;
+        try {
+            fos = openFileOutput(FILE_NAME, MODE_PRIVATE);
+            fos.write(text.getBytes());
+        }
+        catch(IOException ex) {System.out.println(ex);}
+        finally{
+            try{
+                if(fos!=null)
+                    fos.close();
+            }
+            catch(IOException ex){
+                System.out.println(ex);
+            }
+        }
+    }
+
+    public void openText() throws IOException {
+
+        FileInputStream fin = openFileInput(FILE_NAME);
+        //try {
+//            fin = openFileInput(FILE_NAME);
+//            byte[] bytes = new byte[fin.available()];
+//            fin.read(bytes);
+//            text = new String (bytes);
+                InputStreamReader reader = new InputStreamReader(fin);
+                BufferedReader buffer = new BufferedReader(reader);
+                StringBuilder str = new StringBuilder();
+                while((text = buffer.readLine()) != null){
+                str.append(text).append("\n");
+            }
+//        }
+//        catch(IOException ex) {System.out.println(ex);}
+//        finally{
+//
+//            try{
+//                if(fin!=null)
+//                    fin.close();
+//            }
+//            catch(IOException ex){System.out.println(ex);}
+//        }
+
+        Scanner s2 = new Scanner(text);
+        while (s2.hasNext()) {
+            int flag = Integer.parseInt(s2.nextLine());
+            String name = s2.nextLine();
+            double lattitude = Double.parseDouble(s2.next());
+            double longtitude = Double.parseDouble(s2.next());
+            if(flag == 0) {
+                listPoints.add(new Point(0, name, lattitude, longtitude));
+            }else{
+                listPoints.add(new Point(0, name, list.getMyLocationLattitude(), list.getMyLocationLongitude()));
+            }
+        }
+
+//        listPoints = null;
+//        Scanner sc2 = null;
+//        try {
+//            sc2 = new Scanner(new File(FILE_NAME));
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        assert sc2 != null;
+//        while (sc2.hasNextLine()) {
+//            Scanner s2 = new Scanner(sc2.nextLine());
+//            while (s2.hasNext()) {
+//                int flag = Integer.parseInt(s2.nextLine());
+//                String name = s2.nextLine();
+//                double lattitude = Double.parseDouble(s2.next());
+//                double longtitude = Double.parseDouble(s2.next());
+//                if(flag == 0) {
+//                    listPoints.add(new Point(0, name, lattitude, longtitude));
+//                }else{
+//                    listPoints.add(new Point(0, name, list.getMyLocationLattitude(), list.getMyLocationLongitude()));
+//                }
+//            }
+//        }
     }
 }
