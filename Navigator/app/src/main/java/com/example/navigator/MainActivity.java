@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -36,9 +35,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private ArrayList<Point> listPoints = new ArrayList<>();
     private final static String FILE_NAME = "contyyt.txt";
     private String text;
+    private boolean updateFlag = false;
 
     private static final int REQUEST_LOCATION = 2;
-    private static final int REQUEST_FILE = 4;
     GoogleMap map;
     MyLocationListener list = new MyLocationListener();
     private LocationManager locationManager;
@@ -56,6 +55,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         btnAddPoint.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                updateFlag = false;
                 Intent intent = new Intent(".AddPoint");
                 startActivity(intent);
             }
@@ -68,19 +68,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if(!hasPermissions()) {
             requestPerms();
+            onPause();
+            buttonStatus = false;
         }
         else {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
-            }
-
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_FILE);
-            }
             list.showLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
         }
     }
@@ -88,20 +79,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onResume() {
         super.onResume();
-        list.setLocationManager(locationManager);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
+        if(hasPermissions()) {
+            list.setLocationManager(locationManager);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 10, 10, list);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 10, list);
         }
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_FILE);
-        }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 10, 10, list);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 10, list);
     }
 
     @Override
@@ -113,14 +95,16 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
-        list.setMap(map);
-        list.setMyLoc(myLoc);
-        list.setPosition(position);
+        if(hasPermissions()) {
+            list.setMap(map);
+            list.setMyLoc(myLoc);
+            list.setPosition(position);
+        }
     }
 
     private boolean hasPermissions() {
         int res;
-        String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+        String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
         for (String perms : permissions) {
             res = checkCallingOrSelfPermission(perms);
@@ -128,26 +112,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 return false;
             }
         }
-
-        permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        for (String perms : permissions) {
-            res = checkCallingOrSelfPermission(perms);
-            if (!(res == PackageManager.PERMISSION_GRANTED)) {
-                return false;
-            }
-        }
-
         return true;
     }
 
     private void requestPerms() {
-        String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+        String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(permissions, REQUEST_LOCATION);
-        }
-        permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(permissions, REQUEST_FILE);
         }
     }
 
@@ -170,29 +141,39 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void onButtonUpdateClicked(View v) throws IOException {
-        if(markers.size() != 0) {
-            for (int i = 0; i < markers.size(); i++) {
-                Marker mrk = markers.get(i);
-                mrk.remove();
-            }
-        }
-        openText();
-        if(listPoints.get(0).getName().length() != 0){
-            text = null;
-            if (listPoints.size() == 0) {
-                Toast.makeText(MainActivity.this, "Error: file is empty", Toast.LENGTH_SHORT).show();
-            }else {
-                for (int i = 0; i < listPoints.size(); i++) {
-                    markers.add(map.addMarker(new MarkerOptions().position(new LatLng(listPoints.get(i).getLattitude(),
-                            listPoints.get(i).getLongtitude())).title(listPoints.get(i).getName())
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))));
-                    text = text + listPoints.get(i).getFlag() + "\n" + listPoints.get(i).getName() + "\n"
-                            + listPoints.get(i).getLattitude() + "\n" + listPoints.get(i).getLongtitude() + "\n";
+        if(!updateFlag) {
+            if(markers.size() != 0) {
+                for (int i = 0; i < markers.size(); i++) {
+                    Marker mrk = markers.get(i);
+                    mrk.remove();
                 }
-                //saveText();
+            }
+            openText();
+            if (listPoints.get(0).getName().length() != 0) {
+                text = null;
+                if (listPoints.size() == 0) {
+                    Toast.makeText(MainActivity.this, "Error: file is empty", Toast.LENGTH_SHORT).show();
+                } else {
+                    for (int i = 0; i < listPoints.size(); i++) {
+                        markers.add(map.addMarker(new MarkerOptions().position(new LatLng(listPoints.get(i).getLattitude(),
+                                listPoints.get(i).getLongtitude())).title(listPoints.get(i).getName())
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))));
+                        if (text != null) {
+                            text = text + "@@@   @@@" + listPoints.get(i).getFlag() + "@@@   @@@" + listPoints.get(i).getName()
+                                    + "@@@   @@@" + listPoints.get(i).getLattitude() + "@@@   @@@" + listPoints.get(i).getLongtitude();
+                        } else {
+                            text = listPoints.get(i).getFlag() + "@@@   @@@" + listPoints.get(i).getName() + "@@@   @@@"
+                                    + listPoints.get(i).getLattitude() + "@@@   @@@" + listPoints.get(i).getLongtitude();
+                        }
+                    }
+                    saveText();
+                    updateFlag = true;
+                }
+            } else {
+                Toast.makeText(MainActivity.this, "Error: file is empty", Toast.LENGTH_SHORT).show();
             }
         }else {
-            Toast.makeText(MainActivity.this, "Error: file is empty", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "File is already readen", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -242,10 +223,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 longtitude = Double.parseDouble(arr[i]);
                 if(flag == 0) {
                     listPoints.add(new Point(0, name, lattitude, longtitude));
-                }else{
+                }
+                if(flag == 1){
                     listPoints.add(new Point(0, name, list.getMyLocationLattitude(), list.getMyLocationLongitude()));
                 }
             }
+            Toast.makeText(MainActivity.this, "File readed", Toast.LENGTH_SHORT).show();
         }
         else{
             Toast.makeText(MainActivity.this, "Error: file", Toast.LENGTH_SHORT).show();
