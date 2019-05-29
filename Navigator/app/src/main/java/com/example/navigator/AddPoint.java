@@ -16,7 +16,7 @@ import java.io.InputStreamReader;
 
 
 public class AddPoint extends AppCompatActivity {
-    private final static String FILE_NAME = "contt.txt";
+    private final static String FILE_NAME = "contyyt.txt";
     private String text;
 
     @Override
@@ -46,7 +46,11 @@ public class AddPoint extends AppCompatActivity {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    text = text + flag + " " + name1 + " " + lattitude1 + " " + longtitude1 + " ";
+                    if(text != null){
+                        text = text + "@@@   @@@" + flag + "@@@   @@@" + name1 + "@@@   @@@" + lattitude1 + "@@@   @@@" + longtitude1;
+                    }else{
+                        text = flag + "@@@   @@@" + name1 + "@@@   @@@" + lattitude1 + "@@@   @@@" + longtitude1;
+                    }
                     saveText();
                     Toast.makeText(AddPoint.this, "Successfully added a new point", Toast.LENGTH_SHORT).show();
                 }
@@ -78,21 +82,6 @@ public class AddPoint extends AppCompatActivity {
     public void openText() throws IOException {
 
         FileInputStream fin = openFileInput(FILE_NAME);
-//        try {
-//            fin = openFileInput(FILE_NAME);
-//            byte[] bytes = new byte[fin.available()];
-//            fin.read(bytes);
-//            text = new String (bytes);
-//        }
-//        catch(IOException ex) {System.out.println(ex);}
-//        finally{
-//
-//            try{
-//                if(fin!=null)
-//                    fin.close();
-//            }
-//            catch(IOException ex){System.out.println(ex);}
-//        }
         InputStreamReader reader = new InputStreamReader(fin);
         BufferedReader buffer = new BufferedReader(reader);
         StringBuilder str = new StringBuilder();
