@@ -140,7 +140,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void onButtonUpdateClicked(View v) throws IOException {
+    public void onButtonUpdateClicked(View v){
         if(!updateFlag) {
             if(markers.size() != 0) {
                 for (int i = 0; i < markers.size(); i++) {
@@ -196,42 +196,44 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void openText() throws IOException {
-
-        FileInputStream fin = openFileInput(FILE_NAME);
-        text = null;
-        InputStreamReader reader = new InputStreamReader(fin);
-        BufferedReader buffer = new BufferedReader(reader);
-        StringBuilder str = new StringBuilder();
-        while((text = buffer.readLine()) != null) {
-            str.append(text).append(" ");
-        }
-        String[] arr;
-        String name;
-        int flag;
-        double lattitude;
-        double longtitude;
-        if(str.length() != 0) {
-            arr = str.toString().split("@@@   @@@");
-            for (int i = 0; i < arr.length; i++){
-                flag = Integer.parseInt(arr[i]);
-                i++;
-                name = arr[i];
-                i++;
-                lattitude = Double.parseDouble(arr[i]);
-                i++;
-                longtitude = Double.parseDouble(arr[i]);
-                if(flag == 0) {
-                    listPoints.add(new Point(0, name, lattitude, longtitude));
-                }
-                if(flag == 1){
-                    listPoints.add(new Point(0, name, list.getMyLocationLattitude(), list.getMyLocationLongitude()));
-                }
+    public void openText(){
+        try {
+            FileInputStream fin = openFileInput(FILE_NAME);
+            text = null;
+            InputStreamReader reader = new InputStreamReader(fin);
+            BufferedReader buffer = new BufferedReader(reader);
+            StringBuilder str = new StringBuilder();
+            while ((text = buffer.readLine()) != null) {
+                str.append(text).append(" ");
             }
-            Toast.makeText(MainActivity.this, "File readed", Toast.LENGTH_SHORT).show();
-        }
-        else{
-            Toast.makeText(MainActivity.this, "Error: file", Toast.LENGTH_SHORT).show();
+            String[] arr;
+            String name;
+            int flag;
+            double lattitude;
+            double longtitude;
+            if (str.length() != 0) {
+                arr = str.toString().split("@@@   @@@");
+                for (int i = 0; i < arr.length; i++) {
+                    flag = Integer.parseInt(arr[i]);
+                    i++;
+                    name = arr[i];
+                    i++;
+                    lattitude = Double.parseDouble(arr[i]);
+                    i++;
+                    longtitude = Double.parseDouble(arr[i]);
+                    if (flag == 0) {
+                        listPoints.add(new Point(0, name, lattitude, longtitude));
+                    }
+                    if (flag == 1) {
+                        listPoints.add(new Point(0, name, list.getMyLocationLattitude(), list.getMyLocationLongitude()));
+                    }
+                }
+                Toast.makeText(MainActivity.this, "File readed", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(MainActivity.this, "Error: file", Toast.LENGTH_SHORT).show();
+            }
+        }catch(Exception ex) {
+                Toast.makeText(MainActivity.this, "Error: file empty", Toast.LENGTH_SHORT).show();
         }
     }
 }

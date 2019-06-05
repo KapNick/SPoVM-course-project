@@ -53,6 +53,7 @@ public class MyLocationListener implements LocationListener {
     public void pause(){
         locationManager.removeUpdates(this);
         myLoc.remove();
+        map.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocationLattitude, myLocationLongitude)));
     }
 
     @Override
@@ -87,7 +88,7 @@ public class MyLocationListener implements LocationListener {
     }
 
     public boolean checkEnabled() {
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 }
