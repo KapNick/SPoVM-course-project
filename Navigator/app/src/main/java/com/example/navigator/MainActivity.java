@@ -24,6 +24,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -65,13 +66,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if(!hasPermissions()) {
             requestPerms();
             onPause();
             buttonStatus = false;
         }
         else {
+            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
             list.showLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
         }
     }
@@ -89,7 +90,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onPause() {
         super.onPause();
-        list.pause();
+        if(hasPermissions() && list.checkEnabled()) {
+            list.pause();
+        }
     }
 
     @Override
@@ -120,6 +123,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(permissions, REQUEST_LOCATION);
         }
+        this.finish();
     }
 
     public void onButtonLocationClicked(View v){
@@ -148,7 +152,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     mrk.remove();
                 }
             }
-            openText();
+            try {
+                openText();
+            } catch (IOException e) {
+                Toast.makeText(MainActivity.this, "Error: file", Toast.LENGTH_SHORT).show();
+            }
             if (listPoints.get(0).getName().length() != 0) {
                 text = null;
                 if (listPoints.size() == 0) {
@@ -196,44 +204,45 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void openText(){
+    public void openText() throws IOException {
+        FileInputStream fin = null;
         try {
-            FileInputStream fin = openFileInput(FILE_NAME);
-            text = null;
-            InputStreamReader reader = new InputStreamReader(fin);
-            BufferedReader buffer = new BufferedReader(reader);
-            StringBuilder str = new StringBuilder();
-            while ((text = buffer.readLine()) != null) {
-                str.append(text).append(" ");
-            }
-            String[] arr;
-            String name;
-            int flag;
-            double lattitude;
-            double longtitude;
-            if (str.length() != 0) {
-                arr = str.toString().split("@@@   @@@");
-                for (int i = 0; i < arr.length; i++) {
-                    flag = Integer.parseInt(arr[i]);
-                    i++;
-                    name = arr[i];
-                    i++;
-                    lattitude = Double.parseDouble(arr[i]);
-                    i++;
-                    longtitude = Double.parseDouble(arr[i]);
-                    if (flag == 0) {
-                        listPoints.add(new Point(0, name, lattitude, longtitude));
-                    }
-                    if (flag == 1) {
-                        listPoints.add(new Point(0, name, list.getMyLocationLattitude(), list.getMyLocationLongitude()));
-                    }
+            fin = openFileInput(FILE_NAME);
+        } catch (FileNotFoundException e) {
+            Toast.makeText(MainActivity.this, "Error: file", Toast.LENGTH_SHORT).show();
+        }
+        text = null;
+        InputStreamReader reader = new InputStreamReader(fin);
+        BufferedReader buffer = new BufferedReader(reader);
+        StringBuilder str = new StringBuilder();
+        while ((text = buffer.readLine()) != null) {
+            str.append(text).append(" ");
+        }
+        String[] arr;
+        String name;
+        int flag;
+        double lattitude;
+        double longtitude;
+        if (str.length() != 0) {
+            arr = str.toString().split("@@@   @@@");
+            for (int i = 0; i < arr.length; i++) {
+                flag = Integer.parseInt(arr[i]);
+                i++;
+                name = arr[i];
+                i++;
+                lattitude = Double.parseDouble(arr[i]);
+                i++;
+                longtitude = Double.parseDouble(arr[i]);
+                if (flag == 0) {
+                    listPoints.add(new Point(0, name, lattitude, longtitude));
                 }
-                Toast.makeText(MainActivity.this, "File readed", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(MainActivity.this, "Error: file", Toast.LENGTH_SHORT).show();
+                if (flag == 1) {
+                    listPoints.add(new Point(0, name, list.getMyLocationLattitude(), list.getMyLocationLongitude()));
+                }
             }
-        }catch(Exception ex) {
-                Toast.makeText(MainActivity.this, "Error: file empty", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "File readed", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(MainActivity.this, "Error: file", Toast.LENGTH_SHORT).show();
         }
     }
 }
